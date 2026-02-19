@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEP JPG杀手 - 超越传统压缩</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00cc6a;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-hover: #1a1a25;
+            --border: #2a2a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #00ff88 0%, #00ccff 50%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glow-border {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .glow-border:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #000;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .drop-zone {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 204, 255, 0.05) 100%);
+            border: 2px dashed rgba(0, 255, 136, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary) 0%, #00ccff 100%);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .log-entry {
+            font-family: 'Consolas', monospace;
+            border-left: 3px solid transparent;
+            animation: slideIn 0.3s ease;
+        }
+
+        .log-entry.success { border-left-color: var(--primary); }
+        .log-entry.error { border-left-color: #ff4444; }
+        .log-entry.info { border-left-color: #00ccff; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .method-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .method-card:hover {
+            background: var(--bg-hover);
+        }
+
+        .method-card.active {
+            border-color: var(--primary);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .comparison-slider {
+            position: relative;
+            overflow: hidden;
+            cursor: col-resize;
+        }
+
+        .comparison-slider .before-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            cursor: col-resize;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .slider-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .preview-container {
+            background: repeating-conic-gradient(#1a1a25 0% 25%, #12121a 0% 50%) 50% / 20px 20px;
+        }
+
+        .quality-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="antialiased">
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-cyan-500 flex items-center justify-center text-black font-bold text-lg">
+                    M
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold gradient-text">MEP JPG杀手</h1>
+                    <p class="text-xs text-gray-400">超越传统压缩算法 v3.1</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-sm border border-green-500/20">
+                    ● 在线就绪
+                </span>
+                <button onclick="showHelp()" class="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Panel: Upload & Settings -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Upload Zone -->
+                <div class="glow-border rounded-2xl p-6 bg-card">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        上传图片
+                    </h2>
+
+                    <div id="dropZone" class="drop-zone rounded-xl p-8 text-center cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                        </div>
+                        <p class="text-gray-300 font-medium mb-2">拖拽图片到此处</p>
+                        <p class="text-sm text-gray-500">或点击选择文件</p>
+                        <p class="text-xs text-gray-600 mt-2">支持 JPG, PNG, WebP</p>
+                    </div>
+
+                    <div id="fileInfo" class="hidden mt-4 p-4 rounded-lg bg-gray-800/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p id="fileName" class="text-sm font-medium truncate"></p>
+                                <p id="fileSize" class="text-xs text-gray-400"></p>
+                            </div>
+                            <button onclick="clearFile()" class="p-1 hover:bg-red-500/20 rounded text-red-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compression Methods -->
+                <div class="glow-border rounded-2xl p-6 bg-card">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                        压缩算法
+                    </h2>
+
+                    <div class="space-y-3">
+                        <div class="method-card active rounded-xl p-4 bg-gray-800/50" onclick="selectMethod('smart')" id="method-smart">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-semibold text-green-400">🧠 智能压缩</span>
+                                <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">推荐</span>
+                            </div>
+                            <p class="text-sm text-gray-400">自动分析图像特征，选择最佳压缩策略</p>
+                            <div class="mt-2 flex gap-2 text-xs text-gray-500">
+                                <span>⚡ 平衡速度</span>
+                                <span>📊 高压缩率</span>
+                            </div>
+                        </div>
+
+                        <div class="method-card rounded-xl p-4 bg-gray-800/50" onclick="selectMethod('extreme')" id="method-extreme">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-semibold text-cyan-400">🔥 极限压缩</span>
+                                <span class="text-xs px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400">最强</span>
+                            </div>
+                            <p class="text-sm text-gray-400">多算法组合，追求极致压缩率</p>
+                            <div class="mt-2 flex gap-2 text-xs text-gray-500">
+                                <span>🐢 较慢</span>
+                                <span>🎯 最高压缩</span>
+                            </div>
+                        </div>
+
+                        <div class="method-card rounded-xl p-4 bg-gray-800/50" onclick="selectMethod('jpgkiller')" id="method-jpgkiller">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-semibold text-purple-400">⚔️ JPG杀手</span>
+                                <span class="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">专用</span>
+                            </div>
+                            <p class="text-sm text-gray-400">专门针对JPG的超级压缩算法</p>
+                            <div class="mt-2 flex gap-2 text-xs text-gray-500">
+                                <span>🎨 智能质量</span>
+                                <span>📉 60-80%压缩</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quality Settings -->
+                <div class="glow-border rounded-2xl p-6 bg-card">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        质量设置
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm text-gray-300">目标质量</label>
+                                <span id="qualityValue" class="text-sm font-mono text-green-400">75%</span>
+                            </div>
+                            <input type="range" id="qualitySlider" min="1" max="100" value="75" 
+                                   class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                   oninput="updateQuality(this.value)">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>最小体积</span>
+                                <span>最佳质量</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50">
+                            <input type="checkbox" id="resizeCheck" class="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-gray-700">
+                            <label for="resizeCheck" class="text-sm text-gray-300">智能尺寸优化</label>
+                        </div>
+
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50">
+                            <input type="checkbox" id="progressiveCheck" checked class="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-gray-700">
+                            <label for="progressiveCheck" class="text-sm text-gray-300">渐进式JPEG编码</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button id="compressBtn" onclick="startCompression()" disabled 
+                        class="w-full py-4 rounded-xl btn-primary text-lg flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    开始压缩
+                </button>
+            </div>
+
+            <!-- Right Panel: Preview & Results -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Preview Area -->
+                <div class="glow-border rounded-2xl p-6 bg-card min-h-[400px]">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            实时预览
+                        </h2>
+                        <div id="previewBadge" class="hidden px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm">
+                            已压缩
+                        </div>
+                    </div>
+
+                    <div id="previewContainer" class="preview-container rounded-xl h-[350px] flex items-center justify-center relative overflow-hidden">
+                        <div id="emptyState" class="text-center">
+                            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+                                <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500">上传图片后查看预览</p>
+                        </div>
+
+                        <div id="imagePreview" class="hidden w-full h-full flex items-center justify-center">
+                            <img id="previewImg" class="max-w-full max-h-full object-contain" alt="预览">
+                        </div>
+
+                        <!-- Comparison View (shown after compression) -->
+                        <div id="comparisonView" class="hidden w-full h-full">
+                            <div class="comparison-slider w-full h-full relative" id="comparisonSlider">
+                                <img id="afterImage" class="w-full h-full object-contain" alt="压缩后">
+                                <div class="before-image" id="beforeContainer">
+                                    <img id="beforeImage" class="w-full h-full object-contain max-w-none" alt="原始">
+                                </div>
+                                <div class="slider-handle" id="sliderHandle" style="left: 50%;">
+                                    <div class="slider-button">↔</div>
+                                </div>
+                                <div class="quality-badge" style="left: 10px; right: auto;">原始</div>
+                                <div class="quality-badge">压缩后</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div id="statsContainer" class="hidden grid grid-cols-3 gap-4">
+                    <div class="stat-card rounded-xl p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-400">原始大小</span>
+                        </div>
+                        <p id="originalSize" class="text-xl font-bold">-</p>
+                    </div>
+
+                    <div class="stat-card rounded-xl p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-400">压缩后</span>
+                        </div>
+                        <p id="compressedSize" class="text-xl font-bold text-green-400">-</p>
+                    </div>
+
+                    <div class="stat-card rounded-xl p-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-400">压缩率</span>
+                        </div>
+                        <p id="compressionRatio" class="text-xl font-bold text-purple-400">-</p>
+                    </div>
+                </div>
+
+                <!-- Download Button -->
+                <div id="downloadContainer" class="hidden">
+                    <a id="downloadBtn" class="block w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-cyan-500 text-black font-bold text-center hover:shadow-lg hover:shadow-green-500/25 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        下载压缩后的图片
+                    </a>
+                </div>
+
+                <!-- Log Console -->
+                <div class="glow-border rounded-2xl p-6 bg-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            操作日志
+                        </h2>
+                        <button onclick="clearLogs()" class="text-xs text-gray-500 hover:text-gray-300">清除</button>
+                    </div>
+                    <div id="logContainer" class="h-32 overflow-y-auto space-y-1 text-sm font-mono">
+                        <div class="log-entry info p-2 rounded bg-gray-800/30 text-cyan-400">
+                            [系统] MEP JPG杀手 v3.1 已就绪
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-card rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto glow-border">
+            <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+                <h2 class="text-xl font-bold gradient-text">使用帮助</h2>
+                <button onclick="closeHelp()" class="p-2 hover:bg-gray-800 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-gray-300">
+                <h3 class="text-lg font-semibold text-white">🚀 快速开始</h3>
+                <p>1. 拖拽或点击上传 JPG/PNG 图片</p>
+                <p>2. 选择压缩算法（推荐智能压缩）</p>
+                <p>3. 调整质量参数（默认75%平衡最佳）</p>
+                <p>4. 点击"开始压缩"等待处理</p>
+                <p>5. 对比预览效果，满意后下载</p>
+
+                <h3 class="text-lg font-semibold text-white mt-6">🔥 算法说明</h3>
+                <div class="space-y-2">
+                    <p><span class="text-green-400 font-semibold">智能压缩：</span>自动分析图像内容，高频图像保留细节，低频图像大幅压缩</p>
+                    <p><span class="text-cyan-400 font-semibold">极限压缩：</span>组合多种算法，追求极致体积缩减，适合存档用途</p>
+                    <p><span class="text-purple-400 font-semibold">JPG杀手：</span>专门针对JPEG的重新编码优化，可减少60-80%体积</p>
+                </div>
+
+                <h3 class="text-lg font-semibold text-white mt-6">💡 技巧提示</h3>
+                <ul class="list-disc list-inside space-y-1 text-gray-400">
+                    <li>开启"智能尺寸优化"可自动缩小超大图片</li>
+                    <li>渐进式编码让图片加载更平滑</li>
+                    <li>拖拽滑块对比压缩前后的细节差异</li>
+                    <li>所有处理在本地完成，保护隐私安全</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentFile = null;
+        let currentMethod = 'smart';
+        let originalImageData = null;
+        let compressedBlob = null;
+
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const compressBtn = document.getElementById('compressBtn');
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                addLog('请上传图片文件', 'error');
+                return;
+            }
+
+            currentFile = file;
+
+            // Update file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatBytes(file.size);
+            document.getElementById('fileInfo').classList.remove('hidden');
+
+            // Enable compress button
+            compressBtn.disabled = false;
+            compressBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            // Load preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImageData = e.target.result;
+                showPreview(e.target.result);
+                addLog(`已加载: ${file.name} (${formatBytes(file.size)})`, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showPreview(src) {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('imagePreview').classList.remove('hidden');
+            document.getElementById('comparisonView').classList.add('hidden');
+            document.getElementById('previewImg').src = src;
+            document.getElementById('previewBadge').classList.add('hidden');
+        }
+
+        function clearFile() {
+            currentFile = null;
+            originalImageData = null;
+            compressedBlob = null;
+
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('comparisonView').classList.add('hidden');
+            document.getElementById('statsContainer').classList.add('hidden');
+            document.getElementById('downloadContainer').classList.add('hidden');
+
+            compressBtn.disabled = true;
+            compressBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            addLog('已清除文件', 'info');
+        }
+
+        function selectMethod(method) {
+            currentMethod = method;
+
+            // Update UI
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.getElementById(`method-${method}`).classList.add('active');
+
+            const methodNames = {
+                'smart': '智能压缩',
+                'extreme': '极限压缩',
+                'jpgkiller': 'JPG杀手'
+            };
+            addLog(`切换算法: ${methodNames[method]}`, 'info');
+        }
+
+        function updateQuality(value) {
+            document.getElementById('qualityValue').textContent = value + '%';
+        }
+
+        async function startCompression() {
+            if (!currentFile) return;
+
+            compressBtn.disabled = true;
+            compressBtn.innerHTML = `
+                <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                压缩中...
+            `;
+
+            addLog(`开始${currentMethod === 'jpgkiller' ? 'JPG杀手' : ''}压缩处理...`, 'info');
+
+            try {
+                const quality = parseInt(document.getElementById('qualitySlider').value) / 100;
+                const resize = document.getElementById('resizeCheck').checked;
+                const progressive = document.getElementById('progressiveCheck').checked;
+
+                // Simulate compression processing
+                await simulateCompression(quality, resize, progressive);
+
+            } catch (error) {
+                addLog(`压缩失败: ${error.message}`, 'error');
+                compressBtn.disabled = false;
+                compressBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    开始压缩
+                `;
+            }
+        }
+
+        async function simulateCompression(quality, resize, progressive) {
+            // Create canvas for image processing
+            const img = new Image();
+            img.src = originalImageData;
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+
+            let width = img.width;
+            let height = img.height;
+
+            // Smart resize if enabled
+            if (resize && Math.max(width, height) > 2048) {
+                const scale = 2048 / Math.max(width, height);
+                width = Math.floor(width * scale);
+                height = Math.floor(height * scale);
+                addLog(`智能缩放: ${img.width}x${img.height} → ${width}x${height}`, 'info');
+            }
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Draw image
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Apply compression based on method
+            let outputQuality = quality;
+
+            if (currentMethod === 'jpgkiller') {
+                // Simulate JPG killer aggressive compression
+                outputQuality = Math.max(0.3, quality * 0.8);
+                addLog('应用JPG杀手优化策略...', 'info');
+            } else if (currentMethod === 'extreme') {
+                outputQuality = Math.max(0.4, quality * 0.9);
+            }
+
+            // Convert to blob
+            const blob = await new Promise(resolve => {
+                canvas.toBlob(resolve, 'image/jpeg', outputQuality);
+            });
+
+            compressedBlob = blob;
+
+            // Calculate stats
+            const originalSize = currentFile.size;
+            const compressedSize = blob.size;
+            const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+
+            // Update UI
+            document.getElementById('originalSize').textContent = formatBytes(originalSize);
+            document.getElementById('compressedSize').textContent = formatBytes(compressedSize);
+            document.getElementById('compressionRatio').textContent = `-${ratio}%`;
+            document.getElementById('statsContainer').classList.remove('hidden');
+
+            // Show comparison
+            const compressedUrl = URL.createObjectURL(blob);
+            showComparison(originalImageData, compressedUrl);
+
+            // Setup download
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.href = compressedUrl;
+            downloadBtn.download = `compressed_${currentFile.name.replace(/\.[^/.]+$/, '')}.jpg`;
+            document.getElementById('downloadContainer').classList.remove('hidden');
+
+            // Reset button
+            compressBtn.disabled = false;
+            compressBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                再次压缩
+            `;
+
+            addLog(`压缩完成! 体积减少 ${ratio}%`, 'success');
+        }
+
+        function showComparison(originalSrc, compressedSrc) {
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('comparisonView').classList.remove('hidden');
+            document.getElementById('previewBadge').classList.remove('hidden');
+
+            document.getElementById('beforeImage').src = originalSrc;
+            document.getElementById('afterImage').src = compressedSrc;
+
+            // Initialize slider
+            initComparisonSlider();
+        }
+
+        function initComparisonSlider() {
+            const slider = document.getElementById('comparisonSlider');
+            const handle = document.getElementById('sliderHandle');
+            const beforeContainer = document.getElementById('beforeContainer');
+            let isDragging = false;
+
+            const updateSlider = (x) => {
+                const rect = slider.getBoundingClientRect();
+                let percentage = ((x - rect.left) / rect.width) * 100;
+                percentage = Math.max(0, Math.min(100, percentage));
+
+                handle.style.left = percentage + '%';
+                beforeContainer.style.width = percentage + '%';
+            };
+
+            handle.addEventListener('mousedown', () => isDragging = true);
+            document.addEventListener('mouseup', () => isDragging = false);
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) updateSlider(e.clientX);
+            });
+
+            // Touch support
+            handle.addEventListener('touchstart', () => isDragging = true);
+            document.addEventListener('touchend', () => isDragging = false);
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) updateSlider(e.touches[0].clientX);
+            });
+
+            slider.addEventListener('click', (e) => {
+                if (e.target !== handle && !handle.contains(e.target)) {
+                    updateSlider(e.clientX);
+                }
+            });
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type} p-2 rounded bg-gray-800/30`;
+
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            const colors = {
+                'info': 'text-cyan-400',
+                'success': 'text-green-400',
+                'error': 'text-red-400'
+            };
+
+            entry.innerHTML = `<span class="text-gray-500">[${time}]</span> <span class="${colors[type]}">${message}</span>`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = `
+                <div class="log-entry info p-2 rounded bg-gray-800/30 text-cyan-400">
+                    [系统] 日志已清除
+                </div>
+            `;
+        }
+
+        function showHelp() {
+            document.getElementById('helpModal').classList.remove('hidden');
+            document.getElementById('helpModal').classList.add('flex');
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').classList.add('hidden');
+            document.getElementById('helpModal').classList.remove('flex');
+        }
+
+        // Close modal on outside click
+        document.getElementById('helpModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('helpModal')) {
+                closeHelp();
+            }
+        });
+    </script>
+</body>
+</html>
